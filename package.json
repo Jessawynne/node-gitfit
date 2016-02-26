@@ -1,0 +1,23 @@
+{
+  "name": "node-gitfit",
+  "version": "1.0.0",
+  "description": "Nashville Software School project to create a simple fitness app with Heroku, SQLite and Node.js",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jessawynne/node-gitfit.git"
+  },
+  "author": "Jessawynne Parker <jessawynne@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Jessawynne/node-gitfit/issues"
+  },
+  "homepage": "https://github.com/Jessawynne/node-gitfit#readme",
+  "dependencies": {
+    "express": "^4.13.4"
+  }
+}
