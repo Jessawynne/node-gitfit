@@ -1,0 +1,16 @@
+extends layout 
+block content
+  h1 Input Your Steps HERE
+  div.row
+    form.col.s12
+      div.row
+        div.input-field.col.s12
+          label.active(for='date') DATE
+          input#date(type='text', name='date')
+      div.row
+        div.input-field.col.s12
+          label.active(for='steps') STEP COUNT
+          input#steps(type='text', name='step-input', autofocus)
+      div.row
+        div.input-field.col.s12
+          input(type='submit', value='Add Steps')

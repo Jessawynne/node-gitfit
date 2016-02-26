@@ -2,15 +2,17 @@
 
 const express = require('express');
 const app = express();
+const bodyParser = require('body-parser');
 
 const PORT = process.env.PORT || 3000;
 
 app.set('view engine', 'jade');
+app.use(bodyParser.urlencoded({extend: false}));
 
 app.locals.appName = 'GITFIT';
 
 app.get('/', (req, res) => {
-  res.send('step history here');
+  res.render('index');
 });
 
 app.get('/steps', (req, res) => {
@@ -18,7 +20,7 @@ app.get('/steps', (req, res) => {
 });
 
 app.get('/steps/input', (req, res) => {
-  res.send('steps input route');
+  res.render('steps-input');
 });
 
 app.post('/steps/input', (req, res) => {
