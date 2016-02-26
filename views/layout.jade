@@ -1,1 +1,14 @@
-h1 layout.jade
+doctype html
+html
+  head
+    title #{appName}
+    link(rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.5/css/materialize.min.css")
+  body
+    nav.grey.darken-4
+      div.nav-wrapper
+        a(href='/').brand-logo #{appName}
+    .container
+
+      block content
+
+    script(src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.5/js/materialize.min.js")
