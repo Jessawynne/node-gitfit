@@ -3,6 +3,10 @@
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
+const sqlite3 = require('sqlite3');
+
+
+const db = new sqlite3.Database('./db/gitfit.sqlite');
 
 const PORT = process.env.PORT || 3000;
 
@@ -12,7 +16,11 @@ app.use(bodyParser.urlencoded({extend: false}));
 app.locals.appName = 'GITFIT';
 
 app.get('/', (req, res) => {
-  res.render('index');
+  db.all(`SELECT * from users`, (err, dbres) => {
+    if (err) throw err;
+    console.log(dbres);
+    res.render('index');
+  })
 });
 
 app.get('/steps', (req, res) => {
@@ -24,6 +32,7 @@ app.get('/steps/input', (req, res) => {
 });
 
 app.post('/steps/input', (req, res) => {
+  console.log('steps input', req.body);
   res.send('post steps input');
 });
 

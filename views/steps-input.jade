@@ -1,8 +1,8 @@
-extends layout 
+extends layout
 block content
   h1 Input Your Steps HERE
   div.row
-    form.col.s12
+    form.col.s12(action='/steps/input', method='POST')
       div.row
         div.input-field.col.s12
           label.active(for='date') DATE
