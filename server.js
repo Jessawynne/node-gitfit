@@ -32,8 +32,11 @@ app.get('/steps/input', (req, res) => {
 });
 
 app.post('/steps/input', (req, res) => {
+  db.all(`Insert into steplog Values(3,750,'2016-01-01', 1)`, (err,dbres) => {
+    console.log(dbres);
   console.log('steps input', req.body);
   res.send('post steps input');
+  });
 });
 
 app.listen(PORT, () => {
