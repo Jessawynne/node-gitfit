@@ -10,7 +10,7 @@ const db = new sqlite3.Database('./db/gitfit.sqlite');
 const PORT = process.env.PORT || 3000;
 
 app.set('view engine', 'jade');
-app.use(bodyParser.urlencoded({extend: false}));
+app.use(bodyParser.urlencoded({extended: true}));
 
 app.locals.appName = 'GITFIT';
 
@@ -30,31 +30,73 @@ app.get('/steps/input', (req, res) => {
   res.render('steps-input');
 });
 
+function getRandomIntInclusive(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
 
 app.post('/steps/input', (req, res) => {
-  const YO_RANDOM_NUMBER = 4; // uuid.v1();
-  const RIGHT_NOW = '2016-02-26';
+  // collects user information from page input
+  const STEP_COUNT_INPUT = getRandomIntInclusive(500, 2000);
+  console.log(`# of steps is ${STEP_COUNT_INPUT}`);
+  const RIGHT_NOW = new Date().toISOString();
   // steplog values(steplogID, stepCount, stepDate, userID)
+  const userID = 1;
   const dbInsertStepLog = `
-    Insert into steplog (stepCount, stepDate, userID) Values(750,'${RIGHT_NOW}', 1)
+    INSERT 
+    INTO steplog 
+      (stepCount, stepDate, userID) 
+    VALUES
+      (${STEP_COUNT_INPUT},'${RIGHT_NOW}', ${userID})
   `;
- 
-  const dbInsertUser = `
-    insert into users values (1, ${YO_RANDOM_NUMBER}, 'JANE', 'DOE')
+  const dbGetRecentStepLog = `
+    SELECT * 
+    FROM steplog 
+    WHERE steplog.userid = ${userID} 
+    ORDER BY id 
+    DESC
   `;
-  console.log(`yr dbInsertStepLog is ${dbInsertStepLog}`);
-  // db.serialize(
+  // Adds new steplog item and stores it in the stepItems join table w/ user info
+  db.serialize( () => {
+
     db.all(dbInsertStepLog, (err,dbres) => {
       if (err) throw err;
 
-      console.log('resp from db', dbres);
+      console.log('resp from insert', dbres);
       console.log('steps input from browser', req.body);
-      res.redirect('/steps/input');
     })
+    var currentStepLogId;
+    var dbInsertStepLogToStepItems;
+
+    // returns most recent steplog, aka the one inserted just above
+    db.get(dbGetRecentStepLog, (err, dbRes) => {
+      if (err) throw err;
+
+      console.log('resp from get', dbRes);
+      currentStepLogId = dbRes.id;
+      console.log(`currentStepLogId is ${currentStepLogId}`);
+
+      // retrieves information so that we can insert aproprors to join table
+      dbInsertStepLogToStepItems = `
+        INSERT
+        INTO stepItems 
+          (userID, steplogID)
+        VALUES
+          (${userID}, ${currentStepLogId})
+      `;
+      console.log(`command is ${dbInsertStepLogToStepItems}`);
+
+    })
+    // inserts userID and steplogID to join table
+    // db.all(dbInsertStepLogToStepItems, (err, dbRes) => {
+    //   if (err) throw err;
+    //   console.log('resp from last insert', dbRes);
+      res.redirect('/steps/input');
+    // });
+    // db.all(dbInsertStepLogToStepItems);
+  });
     // insert to user table
 
 
-  // );
 });
 
 app.listen(PORT, () => {
