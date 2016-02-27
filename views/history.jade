@@ -1,0 +1,18 @@
+extends layout
+block content
+  table.striped
+    thead
+      tr
+        th(data-field='userID') ID
+        th(data-field='firstName') First
+        th(data-field='lastName') Last
+        th(data-field='stepCount') # of Steps
+        th(data-field='stepDate') Date
+    tbody
+      for line in context
+        tr
+          td= line.userID
+          td= line.firstName
+          td= line.lastName
+          td= line.stepCount
+          td= line.stepDate

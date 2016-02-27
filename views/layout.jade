@@ -7,8 +7,12 @@ html
     nav.grey.darken-4
       div.nav-wrapper
         a(href='/').brand-logo #{appName}
+        a(href='/steps/input') Log Steps
     .container
 
       block content
 
+    script(src="https://code.jquery.com/jquery-2.2.1.js")
     script(src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.5/js/materialize.min.js")
+    script(src="http://code.highcharts.com/highcharts.js")
+    script(src="./public/scripts/step-charting.js")

@@ -1,52 +1,76 @@
 'use strict';
 
+// app setups
+
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
 const sqlite3 = require('sqlite3').verbose();
-
 const db = new sqlite3.Database('./db/gitfit.sqlite');
+// var Highcharts = require('highcharts');
 
 const PORT = process.env.PORT || 3000;
+
+// middlewares
 
 app.set('view engine', 'jade');
 app.use(bodyParser.urlencoded({extended: true}));
 
 app.locals.appName = 'GITFIT';
 
+// routing
+
+
+//////////// SHOWING CHARTS FOR EASY COMPREHENSION ////////////
+
 app.get('/', (req, res) => {
+  // require('highcharts/modules/exporting')(Highcharts);
+  // Highcharts.chart('container', {
+    // options
+  // });
+  var pagejs = require('./public/scripts/step-charting');
+  // console.log(pagejs);
+
+  // create the actual chart
 
   const userDataRequest = `
     SELECT * 
     FROM users 
-    JOIN stepItems on users.userID = stepitems.userID;
+    JOIN stepItems on users.userID = stepitems.userID
+    JOIN stepLog on stepItems.steplogID = steplog.id;
   `;
+
   // interesting: tried to use an .each here but tangled trying to progress from steplogID 21 -> 33
   db.all(userDataRequest, (err, dbRes) => {
     if (err) throw err;
     console.log(dbRes);
-    res.render('index');
+    res.send('pagejs<script>console.log("hi hello")</script>');
   })
 
 });
 
+///////// DISPLAYING USER DB TABLES FOR RAW INFO ////////////////
+
 app.get('/steps', (req, res) => {
+
+  // just display the db info on a table
 
   const userDataRequest = `
     SELECT * 
     FROM users 
-    JOIN stepItems on users.userID = stepitems.userID;
+    JOIN stepItems on users.userID = stepitems.userID
+    JOIN stepLog on stepItems.steplogID = steplog.id;
   `;
   // interesting: tried to use an .each here but tangled trying to progress from steplogID 21 -> 33
   db.all(userDataRequest, (err, dbRes) => {
     if (err) throw err;
     console.log(dbRes);
-    res.render('index', {
+    res.render('history', {
       context: dbRes
     });
   })
 
-  
+
 });
 
 app.get('/steps/input', (req, res) => {
@@ -112,6 +136,7 @@ app.post('/steps/input', (req, res) => {
             console.log('plzz', currentStepLogId);
             if (err) throw err;
             console.log('after', dbRes);
+            res.redirect('/steps');
           });
       });
 
@@ -152,6 +177,8 @@ app.post('/steps/input', (req, res) => {
 
 
 });
+
+// starting server
 
 app.listen(PORT, () => {
   console.log(`Greetings GitFit app, you're on port: ${PORT}`);
