@@ -3,7 +3,7 @@
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
-const sqlite3 = require('sqlite3');
+const sqlite3 = require('sqlite3').verbose();
 
 const db = new sqlite3.Database('./db/gitfit.sqlite');
 
@@ -15,15 +15,38 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.locals.appName = 'GITFIT';
 
 app.get('/', (req, res) => {
-  db.all(`SELECT * from users`, (err, dbres) => {
+
+  const userDataRequest = `
+    SELECT * 
+    FROM users 
+    JOIN stepItems on users.userID = stepitems.userID;
+  `;
+  // interesting: tried to use an .each here but tangled trying to progress from steplogID 21 -> 33
+  db.all(userDataRequest, (err, dbRes) => {
     if (err) throw err;
-    console.log(dbres);
+    console.log(dbRes);
     res.render('index');
   })
+
 });
 
 app.get('/steps', (req, res) => {
-  res.send('all steps');
+
+  const userDataRequest = `
+    SELECT * 
+    FROM users 
+    JOIN stepItems on users.userID = stepitems.userID;
+  `;
+  // interesting: tried to use an .each here but tangled trying to progress from steplogID 21 -> 33
+  db.all(userDataRequest, (err, dbRes) => {
+    if (err) throw err;
+    console.log(dbRes);
+    res.render('index', {
+      context: dbRes
+    });
+  })
+
+  
 });
 
 app.get('/steps/input', (req, res) => {
@@ -33,6 +56,8 @@ app.get('/steps/input', (req, res) => {
 function getRandomIntInclusive(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
+
+////////// CHAINING SYNCHRONOUSLY THE ADDING OF STEPS ///////////
 
 app.post('/steps/input', (req, res) => {
   // collects user information from page input
@@ -46,61 +71,90 @@ app.post('/steps/input', (req, res) => {
     INTO steplog 
       (stepCount, stepDate, userID) 
     VALUES
-      (${STEP_COUNT_INPUT},'${RIGHT_NOW}', ${userID})
+      (${STEP_COUNT_INPUT},'${RIGHT_NOW}', ${userID});
   `;
-  const dbGetRecentStepLog = `
+  const dbGetRecentLog = `
     SELECT * 
     FROM steplog 
     WHERE steplog.userid = ${userID} 
     ORDER BY id 
-    DESC
-  `;
+    DESC;
+  `; 
+
   // Adds new steplog item and stores it in the stepItems join table w/ user info
   db.serialize( () => {
 
-    db.all(dbInsertStepLog, (err,dbres) => {
-      if (err) throw err;
-
-      console.log('resp from insert', dbres);
-      console.log('steps input from browser', req.body);
-    })
     var currentStepLogId;
     var dbInsertStepLogToStepItems;
 
-    // returns most recent steplog, aka the one inserted just above
-    db.get(dbGetRecentStepLog, (err, dbRes) => {
-      if (err) throw err;
+    // NESTED DATABASE QUERIES //
+    db
+      .all(dbInsertStepLog);
+    db
+      .get(dbGetRecentLog, (err, dbRes) => {
+        if (err) throw err;
+        console.log('before', dbRes);
+        var currentStepLogId = dbRes.id;
+        console.log(`currentStepLogId is ${currentStepLogId}`);
 
-      console.log('resp from get', dbRes);
-      currentStepLogId = dbRes.id;
-      console.log(`currentStepLogId is ${currentStepLogId}`);
+        // retrieves information so that we can insert aproprors to join table
+        dbInsertStepLogToStepItems = `
+          INSERT
+          INTO stepItems 
+            (userID, steplogID)
+          VALUES
+            (${userID}, ${currentStepLogId})
+        `;
+        console.log(`command is ${dbInsertStepLogToStepItems}`);
+        // nested, and don't want it that way, but....
+        db
+          .all(`insert into stepitems (userID, steplogID) values ('${userID}', ${currentStepLogId});`, (err, dbRes) => {
+            console.log('plzz', currentStepLogId);
+            if (err) throw err;
+            console.log('after', dbRes);
+          });
+      });
 
-      // retrieves information so that we can insert aproprors to join table
-      dbInsertStepLogToStepItems = `
-        INSERT
-        INTO stepItems 
-          (userID, steplogID)
-        VALUES
-          (${userID}, ${currentStepLogId})
-      `;
-      console.log(`command is ${dbInsertStepLogToStepItems}`);
+    // SERIALIZED DATABASE QUERIES //
 
-    })
-    // inserts userID and steplogID to join table
-    // db.all(dbInsertStepLogToStepItems, (err, dbRes) => {
-    //   if (err) throw err;
-    //   console.log('resp from last insert', dbRes);
-      res.redirect('/steps/input');
-    // });
-    // db.all(dbInsertStepLogToStepItems);
-  });
-    // insert to user table
+    // var stmt = db.prepare(dbInsertStepLog);
+
+    // stmt
+    //   .run()
+    //   .all(dbGetRecentLog, (err, dbRes) => {
+    //     if (err) throw err;
+    //     var currentStepLogId = dbRes.id;
+    //     var dbInsertStepLogToStepItems = `
+    //       INSERT
+    //       INTO stepItems 
+    //         (userID, steplogID)
+    //       VALUES
+    //         (${userID}, ${currentStepLogId})
+    //     `;
+    //   })
+    //   .all(dbInsertStepLogToStepItems, (err, dbRes) => {
+    //     if (err) throw err;
+    //     console.log(currentStepLogId);
+
+    //     console.log(dbRes);
+    //     res.redirect('/steps/input');
+    //   })
+
+
+    // }) // closes retrieving of last steplog
+
+    // stmt.all(dbInsertStepLogToStepItems);
+
+    // want the db.all(dbInsert...) to run here
+
+  }); // ends db serialize function
+
 
 
 });
 
 app.listen(PORT, () => {
-  console.log(`What's up, you're on port: ${PORT}`);
+  console.log(`Greetings GitFit app, you're on port: ${PORT}`);
 });
 
 
